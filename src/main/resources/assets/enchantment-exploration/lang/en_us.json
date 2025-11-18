@@ -21,7 +21,7 @@
   "tooltip.enchantment-exploration.anvil.custom-materials.2": "Should be formatted: <repair material>;<tool1>/<tool2>/...",
   "category.enchantment-exploration.loot-table": "Loot Table",
   "option.enchantment-exploration.loot-table.skip": "Skip Enchantments",
-  "tooltip.enchantment-exploration.loot-table.skip": "When generating a loot table, a normal enchanted book (those naturally occuring in vanilla) will not generate with these enchantments. If no viable enchantments are found, the enchanted book will not be generated.",
+  "tooltip.enchantment-exploration.loot-table.skip": "When generating a loot table, a normal enchanted book (those naturally occurring in vanilla) will not generate with these enchantments. If no viable enchantments are found, the enchanted book will not be generated.",
   "option.enchantment-exploration.loot-table.ignore-skip": "Ignore Skip",
   "tooltip.enchantment-exploration.loot-table.ignore-skip": "Loot tables that will ignore the enchantment skips. Useful for modded loot tables where vanilla enchanted books are wanted.",
   "option.enchantment-exploration.loot-table.book-pulls": "Custom Book Generation",
@@ -30,7 +30,7 @@
   "option.enchantment-exploration.anvil.combine.enabled": "Combine Similar Enchantment Books",
   "tooltip.enchantment-exploration.anvil.combine.enabled": "Should enchanted books with the same enchants be able to be combined to upgrade a level.",
   "option.enchantment-exploration.anvil.upgrade-materials": "Additional Book Upgrade Materials",
-  "tooltip.enchantment-exploration.anvil.upgrade-materials": "These materials can also be combined with a book to upgrade the ecnhantments by a level.",
+  "tooltip.enchantment-exploration.anvil.upgrade-materials": "These materials can also be combined with a book to upgrade the enchantments by a level.",
   "option.enchantment-exploration.chance-up": "Level Upgrade Chance",
   "tooltip.enchantment-exploration.chance-up": "The chance that the level one enchantment will bump up the output enchantment a level higher than in bookshelves.",
   "option.enchantment-exploration.chance-enchantments": "Additional Enchantment Chance",
@@ -38,5 +38,13 @@
   "option.enchantment-exploration.chance-down": "Level Downgrade Chance",
   "tooltip.enchantment-exploration.chance-down": "The chance that an enchant will downgrade a level in a level two enchant.",
   "option.enchantment-exploration.show-bump": "Show Upgrade Before Selection",
-  "tooltip.enchantment-exploration.show-bump": "Shows the upgrade in the enchantment level from a level one enchant before enchanting the item."
+  "tooltip.enchantment-exploration.show-bump": "Shows the upgrade in the enchantment level from a level one enchant before enchanting the item.",
+  "category.enchantment-exploration.villager": "Villager",
+  "option.enchantment-exploration.villager.book.enabled": "Filter Book Enchants",
+  "tooltip.enchantment-exploration.villager.book.enabled": "If the we should remove enchantments in the villager filter enchantment list for enchantment books sold by villagers.\n",
+  "tooltip.enchantment-exploration.villager.warning": "NOTE: only effects newly generated villager trades. Old trades remain uneffected.",
+  "option.enchantment-exploration.villager.tool.enabled": "Filter Tool Enchantments",
+  "tooltip.enchantment-exploration.villager.tool.enabled": "If the we should remove enchantments in the villager filter enchantment list for enchanted tools sold by villagers.\n",
+  "option.enchantment-exploration.villager.filter-list": "Filter Enchantments",
+  "tooltip.enchantment-exploration.villager.filter-list": "The enchantments to filter for the other villager trade settings."
 }

@@ -58,6 +58,13 @@ public class EnchantmentExploration implements ModInitializer {
 		return config;
 	}
 
+	//because of dumb mixin stuff, and the fact that it's static, this was the best I could do.
+	private static final ThreadLocal<Set<RegistryEntry<?>>> registrySkipEntrySet = ThreadLocal.withInitial(HashSet::new);
+
+	public static ThreadLocal<Set<RegistryEntry<?>>> getRegistrySkipEntrySet() {
+		return registrySkipEntrySet;
+	}
+
 	@Override
 	public void onInitialize() {
 		// This code runs as soon as Minecraft is in a mod-load-ready state.
@@ -361,6 +368,46 @@ public class EnchantmentExploration implements ModInitializer {
 			}
 			return ActionResult.PASS;
 		});
+
+		//Villager trades
+		EnchantBookFactoryBeforeGenerateEnchantmentCallback.EVENT.register((receiver, registry, currentPossibleEnchants) -> {
+			if(config.isEnabled() && config.shouldDisableVillagerBookTrades()){
+				for(String stringEntry : config.getVillagerSkipEnchantments()){
+					Identifier id = Identifier.tryParse(stringEntry);
+					if(id != null){
+						RegistryEntry<Enchantment> entry = registry.getEntry(registry.get(id));
+						if(entry != null){
+							registrySkipEntrySet.get().add(entry);
+						}
+					}
+				}
+			}
+			return ActionResult.PASS;
+		});
+
+		EnchantBookFactoryAfterGenerateEnchantmentCallback.EVENT.register((receiver, registry, currentPossibleEnchants) -> {
+			registrySkipEntrySet.remove();
+
+			return ActionResult.PASS;
+		});
+
+		SellEnchantedToolFactoryCreateCallback.EVENT.register(((receiver, original) -> {
+			if(config.isEnabled() && config.shouldDisableVillagerToolTrades()){
+				ItemStack itemEnchanted = original.copy();
+				ItemEnchantmentsComponent enchantmentComponent = net.minecraft.enchantment.EnchantmentHelper.getEnchantments(itemEnchanted);
+
+				net.minecraft.enchantment.EnchantmentHelper.apply(original, components -> components.remove(removeEnchant -> true));
+				for (RegistryEntry<Enchantment> enchantment : enchantmentComponent.getEnchantments()) {
+					if (!config.getVillagerSkipEnchantments().contains(enchantment.getIdAsString())) {
+						original.addEnchantment(enchantment, enchantmentComponent.getLevel(enchantment));
+					}
+				}
+
+				return original;
+			}
+
+			return null;
+		}));
 	}
 
 	public static Consumer<ItemStack> generateLootAfterFunctions(LootTable receiver, Consumer<ItemStack> lootConsumer, LootContext context) {
@@ -383,7 +430,7 @@ public class EnchantmentExploration implements ModInitializer {
 
 					net.minecraft.enchantment.EnchantmentHelper.apply(itemStack, components -> components.remove(removeEnchant -> true));
 					for (RegistryEntry<Enchantment> enchantment : enchantmentComponent.getEnchantments()) {
-						if (!config.getSkipEnchantments().contains(enchantment.getIdAsString())) {
+						if (!config.getLootTableSkipEnchantments().contains(enchantment.getIdAsString())) {
 							itemStack.addEnchantment(enchantment, enchantmentComponent.getLevel(enchantment));
 						}
 					}

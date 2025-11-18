@@ -56,6 +56,9 @@ public class EnchantmentExplorationConfig {
             Map.entry("minecraft:chests/bastion_treasure", "enchantment-exploration:book/protection"),
             Map.entry("minecraft:chests/bastion_other", "enchantment-exploration:book/bastion"))
     );
+    public boolean filterEnchantmentsVillagerBookTrades = true;
+    public boolean filterEnchantmentsVillagerToolTrades = false;
+    public Set<String> skipEnchantmentsInVillagerTrades = new HashSet<>(Set.of("minecraft:blast_protection","minecraft:feather_falling","minecraft:fire_protection","minecraft:projectile_protection","minecraft:protection","minecraft:thorns","minecraft:aqua_affinity","minecraft:depth_strider","minecraft:frost_walker","minecraft:respiration","minecraft:soul_speed","minecraft:swift_sneak","minecraft:bane_of_arthropods","minecraft:breach","minecraft:density","minecraft:fire_aspect","minecraft:knockback","minecraft:looting","minecraft:sharpness","minecraft:smite","minecraft:sweeping_edge","minecraft:wind_burst","minecraft:flame","minecraft:power","minecraft:punch","minecraft:quick_charge","minecraft:multishot","minecraft:piercing","minecraft:infinity","minecraft:channeling","minecraft:impaling","minecraft:loyalty","minecraft:riptide","minecraft:efficiency","minecraft:fortune","minecraft:silk_touch","minecraft:mending","minecraft:unbreaking","minecraft:luck_of_the_sea","minecraft:lure","minecraft:binding_curse","minecraft:vanishing_curse"));
 
     public void setEnabled(boolean enabled){
         this.enabled = enabled;
@@ -211,15 +214,15 @@ public class EnchantmentExplorationConfig {
         ignoreSkipLootTables = new ArrayList<>(list);
     }
 
-    public Set<String> getSkipEnchantments(){
+    public Set<String> getLootTableSkipEnchantments(){
         return skipEnchantmentsInLootTable;
     }
 
-    public List<String> getSkipEnchantmentsList(){
+    public List<String> getLootTableSkipEnchantmentsList(){
         return new ArrayList<>(skipEnchantmentsInLootTable);
     }
 
-    public void setSkipEnchantmentsFromList(List<String> list){
+    public void setLootTableSkipEnchantmentsFromList(List<String> list){
         skipEnchantmentsInLootTable = new HashSet<>(list);
     }
 
@@ -246,6 +249,34 @@ public class EnchantmentExplorationConfig {
             newMap.put(splitString[0], splitString[1]);
         }
         lootTableBookPulls = newMap;
+    }
+
+    public void setFilterEnchantmentsVillagerBookTrades(Boolean filterEnchantmentsVillagerBookTrades){
+        this.filterEnchantmentsVillagerBookTrades = filterEnchantmentsVillagerBookTrades;
+    }
+
+    public boolean shouldDisableVillagerBookTrades(){
+        return filterEnchantmentsVillagerBookTrades;
+    }
+
+    public void setFilterEnchantmentsVillagerToolTrades(Boolean filterEnchantmentsVillagerToolTrades){
+        this.filterEnchantmentsVillagerToolTrades = filterEnchantmentsVillagerToolTrades;
+    }
+
+    public boolean shouldDisableVillagerToolTrades(){
+        return filterEnchantmentsVillagerToolTrades;
+    }
+
+    public Set<String> getVillagerSkipEnchantments(){
+        return skipEnchantmentsInVillagerTrades;
+    }
+
+    public List<String> getVillagerSkipEnchantmentsList(){
+        return new ArrayList<>(skipEnchantmentsInVillagerTrades);
+    }
+
+    public void setVillagerSkipEnchantmentsFromList(List<String> list){
+        skipEnchantmentsInVillagerTrades = new HashSet<>(list);
     }
 
     public String toJson() {

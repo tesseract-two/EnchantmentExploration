@@ -21,6 +21,7 @@ public class ClothConfigScreenFactory {
         ConfigCategory main = builder.getOrCreateCategory(Text.translatable("category.enchantment-exploration.main"));
         ConfigCategory anvil = builder.getOrCreateCategory(Text.translatable("category.enchantment-exploration.anvil"));
         ConfigCategory lootTables = builder.getOrCreateCategory(Text.translatable("category.enchantment-exploration.loot-table"));
+        ConfigCategory villager = builder.getOrCreateCategory(Text.translatable("category.enchantment-exploration.villager"));
 
         main.addEntry(entryBuilder.startBooleanToggle(Text.translatable("option.enchantment-exploration.main.enabled"), EnchantmentExploration.getConfig().isEnabled())
                 .setDefaultValue(defaultConfig.isEnabled())
@@ -100,16 +101,36 @@ public class ClothConfigScreenFactory {
                 .setTooltip(Text.translatable("tooltip.enchantment-exploration.loot-table.ignore-skip"))
                 .setSaveConsumer(newValue -> EnchantmentExploration.getConfig().setIgnoreTables(newValue))
                 .build());
-        lootTables.addEntry(entryBuilder.startStrList(Text.translatable("option.enchantment-exploration.loot-table.skip"), EnchantmentExploration.getConfig().getSkipEnchantmentsList())
-                .setDefaultValue(defaultConfig.getSkipEnchantmentsList())
+        lootTables.addEntry(entryBuilder.startStrList(Text.translatable("option.enchantment-exploration.loot-table.skip"), EnchantmentExploration.getConfig().getLootTableSkipEnchantmentsList())
+                .setDefaultValue(defaultConfig.getLootTableSkipEnchantmentsList())
                 .setTooltip(Text.translatable("tooltip.enchantment-exploration.loot-table.skip"))
-                .setSaveConsumer(newValue -> EnchantmentExploration.getConfig().setSkipEnchantmentsFromList(newValue))
+                .setSaveConsumer(newValue -> EnchantmentExploration.getConfig().setLootTableSkipEnchantmentsFromList(newValue))
                 .build());
         lootTables.addEntry(entryBuilder.startStrList(Text.translatable("option.enchantment-exploration.loot-table.book-pulls"), EnchantmentExploration.getConfig().getLootTableBookPullsList())
                 .setDefaultValue(defaultConfig.getLootTableBookPullsList())
                 .setTooltip(Text.translatable("tooltip.enchantment-exploration.loot-table.skip.book-pulls.1")
                         .append(Text.translatable("tooltip.enchantment-exploration.anvil.skip.book-pulls.2").formatted(Formatting.YELLOW)))
                 .setSaveConsumer(newValue -> EnchantmentExploration.getConfig().setLootTableBookPullsList(newValue))
+                .build());
+
+        villager.addEntry(entryBuilder.startBooleanToggle(Text.translatable("option.enchantment-exploration.villager.book.enabled"), EnchantmentExploration.getConfig().shouldDisableVillagerBookTrades())
+                .setDefaultValue(defaultConfig.shouldDisableVillagerBookTrades())
+                .setTooltip(Text.translatable("tooltip.enchantment-exploration.villager.book.enabled")
+                        .append(Text.translatable("tooltip.enchantment-exploration.villager.warning").formatted(Formatting.YELLOW)))
+                .setSaveConsumer(newValue -> EnchantmentExploration.getConfig().setFilterEnchantmentsVillagerBookTrades(newValue))
+                .build());
+
+        villager.addEntry(entryBuilder.startBooleanToggle(Text.translatable("option.enchantment-exploration.villager.tool.enabled"), EnchantmentExploration.getConfig().shouldDisableVillagerToolTrades())
+                .setDefaultValue(defaultConfig.shouldDisableVillagerToolTrades())
+                .setTooltip(Text.translatable("tooltip.enchantment-exploration.villager.tool.enabled")
+                        .append(Text.translatable("tooltip.enchantment-exploration.villager.warning").formatted(Formatting.YELLOW)))
+                .setSaveConsumer(newValue -> EnchantmentExploration.getConfig().setFilterEnchantmentsVillagerToolTrades(newValue))
+                .build());
+
+        villager.addEntry(entryBuilder.startStrList(Text.translatable("option.enchantment-exploration.villager.filter-list"), EnchantmentExploration.getConfig().getVillagerSkipEnchantmentsList())
+                .setDefaultValue(defaultConfig.getVillagerSkipEnchantmentsList())
+                .setTooltip(Text.translatable("tooltip.enchantment-exploration.villager.filter-list"))
+                .setSaveConsumer(newValue -> EnchantmentExploration.getConfig().setVillagerSkipEnchantmentsFromList(newValue))
                 .build());
 
         return builder.build();
