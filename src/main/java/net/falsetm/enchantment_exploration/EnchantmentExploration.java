@@ -129,15 +129,15 @@ public class EnchantmentExploration implements ModInitializer {
 
 					//bump up now if we should show it
 					float roll = random.nextFloat();
-					int selectedEnchantsLevel = selected.level;
-					if(config.shouldShowBumpUp() && roll <= config.getBumpUpChance() && selectedEnchantsLevel < selected.enchantment.value().getMaxLevel()){
-						selected = new EnchantmentLevelEntry(selected.enchantment, selected.level+1);
+					int selectedEnchantsLevel = selected.level();
+					if(config.shouldShowBumpUp() && roll <= config.getBumpUpChance() && selectedEnchantsLevel < selected.enchantment().value().getMaxLevel()){
+						selected = new EnchantmentLevelEntry(selected.enchantment(), selected.level()+1);
 					}
 
 					//set the enchantment. Edit this to make it use text for display
 					receiver.enchantmentPower[0] = config.getCost0();
-					receiver.enchantmentId[0] = indexedIterable.getRawId(selected.enchantment);
-					receiver.enchantmentLevel[0] = selected.level;
+					receiver.enchantmentId[0] = indexedIterable.getRawId(selected.enchantment());
+					receiver.enchantmentLevel[0] = selected.level();
 
 					int mixerRealID = -1;
 					Optional<RegistryEntry.Reference<Enchantment>> mixer = registryManager.getEntry(mixerID);
@@ -207,12 +207,12 @@ public class EnchantmentExploration implements ModInitializer {
 							EnchantmentLevelEntry entry = possibleEnchants.get(randomIndex);
 							possibleEnchants.remove(randomIndex);
 
-							boolean compatibleWithAll = net.minecraft.enchantment.EnchantmentHelper.isCompatible(returnEnchants.stream().map(e->e.enchantment).collect(Collectors.toList()), entry.enchantment);
+							boolean compatibleWithAll = net.minecraft.enchantment.EnchantmentHelper.isCompatible(returnEnchants.stream().map(EnchantmentLevelEntry::enchantment).collect(Collectors.toList()), entry.enchantment());
 
 							if(compatibleWithAll){
 								float roll = random.nextFloat();
 								if(returnEnchants.isEmpty() || roll <= config.getAdditionalEnchantmentChance()){
-									int curLevel = entry.level;
+									int curLevel = entry.level();
 
 									if(curLevel > 1){
 										roll = random.nextFloat();
@@ -220,7 +220,7 @@ public class EnchantmentExploration implements ModInitializer {
 											curLevel--;
 										}
 									}
-									returnEnchants.add(new EnchantmentLevelEntry(entry.enchantment, curLevel));
+									returnEnchants.add(new EnchantmentLevelEntry(entry.enchantment(), curLevel));
 								}
 							}
 						}
@@ -233,11 +233,11 @@ public class EnchantmentExploration implements ModInitializer {
 							EnchantmentLevelEntry entry = possibleEnchants.get(randomIndex);
 							possibleEnchants.remove(randomIndex);
 
-							boolean compatibleWithAll = net.minecraft.enchantment.EnchantmentHelper.isCompatible(returnEnchants.stream().map(e->e.enchantment).collect(Collectors.toList()), entry.enchantment);
+							boolean compatibleWithAll = net.minecraft.enchantment.EnchantmentHelper.isCompatible(returnEnchants.stream().map(EnchantmentLevelEntry::enchantment).collect(Collectors.toList()), entry.enchantment());
 							if(compatibleWithAll){
-								int curLevel = entry.level;
+								int curLevel = entry.level();
 								if(curLevel > 1){
-									returnEnchants.add(new EnchantmentLevelEntry(entry.enchantment, curLevel-1));
+									returnEnchants.add(new EnchantmentLevelEntry(entry.enchantment(), curLevel-1));
 								}
 								else{
 									returnEnchants.add(entry);

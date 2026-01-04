@@ -10,7 +10,7 @@ public class EnchantmentHelper {
     public static List<EnchantmentLevelEntry> legalEnchantments(ItemStack stack, List<EnchantmentLevelEntry> inputEnchantments){
         List<EnchantmentLevelEntry> enchantments = new ArrayList<>();
         for(EnchantmentLevelEntry enchantment : inputEnchantments){
-            if(enchantment.enchantment.value().isAcceptableItem(stack)){
+            if(enchantment.enchantment().value().isAcceptableItem(stack)){
                 enchantments.add(enchantment);
             }
         }
