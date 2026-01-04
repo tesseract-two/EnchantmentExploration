@@ -3,7 +3,7 @@ package net.falsetm.enchantment_exploration.mixin;
 import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
 import net.falsetm.enchantment_exploration.EnchantmentExploration;
 import net.falsetm.enchantment_exploration.mixin_ducks.RegistryEntryListNamedDuck;
-import net.minecraft.registry.Registry;
+import net.minecraft.registry.RegistryEntryLookup;
 import net.minecraft.registry.entry.RegistryEntry;
 import net.minecraft.registry.entry.RegistryEntryList;
 import org.spongepowered.asm.mixin.Mixin;
@@ -13,9 +13,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
-@Mixin(Registry.class)
+@Mixin(RegistryEntryLookup.class)
 public interface RegistryMixin{
-    @ModifyExpressionValue(method = "getRandomEntry", at = @At(value = "INVOKE", target = "Lnet/minecraft/registry/Registry;getOptional(Lnet/minecraft/registry/tag/TagKey;)Ljava/util/Optional;"))
+    @ModifyExpressionValue(method = "getRandomEntry", at = @At(value = "INVOKE", target = "Lnet/minecraft/registry/RegistryEntryLookup;getOptional(Lnet/minecraft/registry/tag/TagKey;)Ljava/util/Optional;"))
     default Optional<?> falsetm$changeRandomOutput(Optional<RegistryEntryList.Named<?>> original){
 
         if(original.isEmpty() || EnchantmentExploration.getRegistrySkipEntrySet().get().isEmpty()){
