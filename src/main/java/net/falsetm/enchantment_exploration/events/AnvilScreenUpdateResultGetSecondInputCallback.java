@@ -2,9 +2,9 @@ package net.falsetm.enchantment_exploration.events;
 
 import net.fabricmc.fabric.api.event.Event;
 import net.fabricmc.fabric.api.event.EventFactory;
-import net.minecraft.inventory.Inventory;
-import net.minecraft.item.ItemStack;
-import net.minecraft.screen.AnvilScreenHandler;
+import net.minecraft.world.Container;
+import net.minecraft.world.inventory.AnvilMenu;
+import net.minecraft.world.item.ItemStack;
 import org.jetbrains.annotations.Nullable;
 
 public interface AnvilScreenUpdateResultGetSecondInputCallback {
@@ -20,5 +20,5 @@ public interface AnvilScreenUpdateResultGetSecondInputCallback {
 
                 return null;
             });
-    @Nullable ItemStack getStack(AnvilScreenHandler receiver, Inventory inventory);
+    @Nullable ItemStack getStack(AnvilMenu receiver, Container inventory);
 }

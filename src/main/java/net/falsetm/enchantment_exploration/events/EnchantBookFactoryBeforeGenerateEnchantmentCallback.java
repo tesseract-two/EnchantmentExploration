@@ -2,25 +2,25 @@ package net.falsetm.enchantment_exploration.events;
 
 import net.fabricmc.fabric.api.event.Event;
 import net.fabricmc.fabric.api.event.EventFactory;
-import net.minecraft.enchantment.Enchantment;
-import net.minecraft.registry.Registry;
-import net.minecraft.registry.tag.TagKey;
-import net.minecraft.util.ActionResult;
-import net.minecraft.village.TradeOffers;
+import net.minecraft.core.Registry;
+import net.minecraft.tags.TagKey;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.entity.npc.villager.VillagerTrades;
+import net.minecraft.world.item.enchantment.Enchantment;
 
 public interface EnchantBookFactoryBeforeGenerateEnchantmentCallback {
     Event<EnchantBookFactoryBeforeGenerateEnchantmentCallback> EVENT = EventFactory.createArrayBacked(EnchantBookFactoryBeforeGenerateEnchantmentCallback.class,
             (listeners) -> (receiver, registry, tagKey) -> {
                 for (EnchantBookFactoryBeforeGenerateEnchantmentCallback listener : listeners) {
-                    ActionResult result = listener.beforeRandomGetPossibleEnchants(receiver, registry, tagKey);
+                    InteractionResult result = listener.beforeRandomGetPossibleEnchants(receiver, registry, tagKey);
 
-                    if (result != ActionResult.PASS) {
+                    if (result != InteractionResult.PASS) {
                         return result;
                     }
                 }
 
-                return ActionResult.PASS;
+                return InteractionResult.PASS;
             });
 
-    ActionResult beforeRandomGetPossibleEnchants(TradeOffers.EnchantBookFactory receiver, Registry<Enchantment> registry, TagKey<Enchantment> currentPossibleEnchants);
+    InteractionResult beforeRandomGetPossibleEnchants(VillagerTrades.EnchantBookForEmeralds receiver, Registry<Enchantment> registry, TagKey<Enchantment> currentPossibleEnchants);
 }

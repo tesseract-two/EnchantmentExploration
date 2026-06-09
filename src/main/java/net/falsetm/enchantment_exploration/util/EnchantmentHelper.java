@@ -1,16 +1,15 @@
 package net.falsetm.enchantment_exploration.util;
 
-import net.minecraft.enchantment.EnchantmentLevelEntry;
-import net.minecraft.item.ItemStack;
-
 import java.util.ArrayList;
 import java.util.List;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.enchantment.EnchantmentInstance;
 
 public class EnchantmentHelper {
-    public static List<EnchantmentLevelEntry> legalEnchantments(ItemStack stack, List<EnchantmentLevelEntry> inputEnchantments){
-        List<EnchantmentLevelEntry> enchantments = new ArrayList<>();
-        for(EnchantmentLevelEntry enchantment : inputEnchantments){
-            if(enchantment.enchantment().value().isAcceptableItem(stack)){
+    public static List<EnchantmentInstance> legalEnchantments(ItemStack stack, List<EnchantmentInstance> inputEnchantments){
+        List<EnchantmentInstance> enchantments = new ArrayList<>();
+        for(EnchantmentInstance enchantment : inputEnchantments){
+            if(enchantment.enchantment().value().canEnchant(stack)){
                 enchantments.add(enchantment);
             }
         }

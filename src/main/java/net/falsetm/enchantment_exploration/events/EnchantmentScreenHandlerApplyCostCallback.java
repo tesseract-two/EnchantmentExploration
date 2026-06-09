@@ -2,8 +2,8 @@ package net.falsetm.enchantment_exploration.events;
 
 import net.fabricmc.fabric.api.event.Event;
 import net.fabricmc.fabric.api.event.EventFactory;
-import net.minecraft.item.ItemStack;
-import net.minecraft.screen.EnchantmentScreenHandler;
+import net.minecraft.world.inventory.EnchantmentMenu;
+import net.minecraft.world.item.ItemStack;
 import org.jetbrains.annotations.Nullable;
 
 public interface EnchantmentScreenHandlerApplyCostCallback {
@@ -19,6 +19,6 @@ public interface EnchantmentScreenHandlerApplyCostCallback {
 
                 return null;
             });
-    @Nullable Integer applyCost(EnchantmentScreenHandler receiver, ItemStack stack, int inputLevels);
+    @Nullable Integer applyCost(EnchantmentMenu receiver, ItemStack stack, int inputLevels);
 }
 

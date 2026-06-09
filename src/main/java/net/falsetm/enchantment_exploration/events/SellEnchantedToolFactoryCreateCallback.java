@@ -2,8 +2,8 @@ package net.falsetm.enchantment_exploration.events;
 
 import net.fabricmc.fabric.api.event.Event;
 import net.fabricmc.fabric.api.event.EventFactory;
-import net.minecraft.item.ItemStack;
-import net.minecraft.village.TradeOffers;
+import net.minecraft.world.entity.npc.villager.VillagerTrades;
+import net.minecraft.world.item.ItemStack;
 import org.jetbrains.annotations.Nullable;
 
 public interface SellEnchantedToolFactoryCreateCallback {
@@ -19,5 +19,5 @@ public interface SellEnchantedToolFactoryCreateCallback {
 
                 return null;
             });
-    @Nullable ItemStack sellingStack(TradeOffers.SellEnchantedToolFactory receiver, ItemStack original);
+    @Nullable ItemStack sellingStack(VillagerTrades.EnchantedItemForEmeralds receiver, ItemStack original);
 }

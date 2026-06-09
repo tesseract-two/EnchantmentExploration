@@ -8,26 +8,31 @@ import net.falsetm.enchantment_exploration.mixin.EnchantmentScreenHandlerAccesso
 import net.falsetm.enchantment_exploration.mixin_ducks.EnchantmentHandlerDuck;
 import net.falsetm.enchantment_exploration.mixin_ducks.LootTableDuck;
 import net.falsetm.enchantment_exploration.util.EnchantmentHelper;
-import net.minecraft.block.Blocks;
-import net.minecraft.block.EnchantingTableBlock;
-import net.minecraft.block.entity.BlockEntityType;
-import net.minecraft.block.entity.ChiseledBookshelfBlockEntity;
-import net.minecraft.component.type.ItemEnchantmentsComponent;
-import net.minecraft.enchantment.Enchantment;
-import net.minecraft.enchantment.EnchantmentLevelEntry;
-import net.minecraft.item.ItemStack;
-import net.minecraft.item.Items;
-import net.minecraft.loot.LootTable;
-import net.minecraft.loot.context.LootContext;
-import net.minecraft.registry.*;
-import net.minecraft.registry.entry.RegistryEntry;
-import net.minecraft.screen.AnvilScreenHandler;
-import net.minecraft.server.world.ServerWorld;
-import net.minecraft.util.ActionResult;
-import net.minecraft.util.Identifier;
-import net.minecraft.util.collection.IndexedIterable;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.random.Random;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Holder;
+import net.minecraft.core.IdMap;
+import net.minecraft.core.Registry;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.core.registries.Registries;
+import net.minecraft.core.Registry.*;
+import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceKey;
+import net.minecraft.server.ReloadableServerRegistries;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.util.RandomSource;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.inventory.AnvilMenu;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
+import net.minecraft.world.item.enchantment.Enchantment;
+import net.minecraft.world.item.enchantment.EnchantmentInstance;
+import net.minecraft.world.item.enchantment.ItemEnchantments;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.EnchantingTableBlock;
+import net.minecraft.world.level.block.entity.BlockEntityType;
+import net.minecraft.world.level.block.entity.ChiseledBookShelfBlockEntity;
+import net.minecraft.world.level.storage.loot.LootContext;
+import net.minecraft.world.level.storage.loot.LootTable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -46,8 +51,8 @@ public class EnchantmentExploration implements ModInitializer {
 	// That way, it's clear which mod wrote info, warnings, and errors.
 	public static final Logger LOGGER = LoggerFactory.getLogger(MOD_ID);
 
-	private static final Identifier mixerID = Identifier.of(MOD_ID,"mixer");
-	private static final Identifier all_enchantsID = Identifier.of(MOD_ID,"all_enchants");
+	private static final Identifier mixerID = Identifier.fromNamespaceAndPath(MOD_ID,"mixer");
+	private static final Identifier all_enchantsID = Identifier.fromNamespaceAndPath(MOD_ID,"all_enchants");
 
 	private static final String enchantmentAllowedString = "enchantment-exploration-allowed";
 
@@ -59,9 +64,9 @@ public class EnchantmentExploration implements ModInitializer {
 	}
 
 	//because of dumb mixin stuff, and the fact that it's static, this was the best I could do.
-	private static final ThreadLocal<Set<RegistryEntry<?>>> registrySkipEntrySet = ThreadLocal.withInitial(HashSet::new);
+	private static final ThreadLocal<Set<Holder<?>>> registrySkipEntrySet = ThreadLocal.withInitial(HashSet::new);
 
-	public static ThreadLocal<Set<RegistryEntry<?>>> getRegistrySkipEntrySet() {
+	public static ThreadLocal<Set<Holder<?>>> getRegistrySkipEntrySet() {
 		return registrySkipEntrySet;
 	}
 
@@ -81,21 +86,21 @@ public class EnchantmentExploration implements ModInitializer {
 		});
 
 		EnchantmentContentChangedCallback.EVENT.register((receiver, stack, world, pos) -> {
-			if(config.isEnabled() && world instanceof ServerWorld serverWorld){
-				Map<RegistryEntry<Enchantment>, Integer> enchantmentLevelMap = new HashMap<>();
-				for (BlockPos offset : EnchantingTableBlock.POWER_PROVIDER_OFFSETS) {
+			if(config.isEnabled() && world instanceof ServerLevel serverWorld){
+				Map<Holder<Enchantment>, Integer> enchantmentLevelMap = new HashMap<>();
+				for (BlockPos offset : EnchantingTableBlock.BOOKSHELF_OFFSETS) {
 					//if we can use the block
-					if (EnchantingTableBlock.canAccessPowerProvider(world, pos, offset)) {
-						BlockPos shelfPos = new BlockPos(pos).add(offset);
+					if (EnchantingTableBlock.isValidBookShelf(world, pos, offset)) {
+						BlockPos shelfPos = new BlockPos(pos).offset(offset);
 						if(world.getBlockState(shelfPos).getBlock() == Blocks.CHISELED_BOOKSHELF){
-							ChiseledBookshelfBlockEntity bookshelfBlockEntity = serverWorld.getBlockEntity(shelfPos, BlockEntityType.CHISELED_BOOKSHELF).orElse(null);
+							ChiseledBookShelfBlockEntity bookshelfBlockEntity = serverWorld.getBlockEntity(shelfPos, BlockEntityType.CHISELED_BOOKSHELF).orElse(null);
 							if(bookshelfBlockEntity != null){
-								for(int i = 0; i < ChiseledBookshelfBlockEntity.MAX_BOOKS; i++){
-									ItemStack bookItem = bookshelfBlockEntity.getStack(i);
-									if(bookItem.isOf(Items.ENCHANTED_BOOK)){
-										ItemEnchantmentsComponent enchantmentComponent = net.minecraft.enchantment.EnchantmentHelper.getEnchantments(bookItem);
+								for(int i = 0; i < ChiseledBookShelfBlockEntity.MAX_BOOKS_IN_STORAGE; i++){
+									ItemStack bookItem = bookshelfBlockEntity.getItem(i);
+									if(bookItem.is(Items.ENCHANTED_BOOK)){
+										ItemEnchantments enchantmentComponent = net.minecraft.world.item.enchantment.EnchantmentHelper.getEnchantmentsForCrafting(bookItem);
 										if(enchantmentComponent != null){
-											for(RegistryEntry<Enchantment> enchantment : enchantmentComponent.getEnchantments()){
+											for(Holder<Enchantment> enchantment : enchantmentComponent.keySet()){
 												Integer oldLevel = enchantmentLevelMap.getOrDefault(enchantment, null);
 												int newLevel = enchantmentComponent.getLevel(enchantment);
 												if(oldLevel == null || oldLevel < newLevel){
@@ -110,91 +115,91 @@ public class EnchantmentExploration implements ModInitializer {
 					}
 				}
 
-				List<EnchantmentLevelEntry> possibleEnchants = new ArrayList<>();
+				List<EnchantmentInstance> possibleEnchants = new ArrayList<>();
 				for(var entry : enchantmentLevelMap.entrySet()){
-					possibleEnchants.add(new EnchantmentLevelEntry(entry.getKey(), entry.getValue()));
+					possibleEnchants.add(new EnchantmentInstance(entry.getKey(), entry.getValue()));
 				}
 				possibleEnchants = EnchantmentHelper.legalEnchantments(stack, possibleEnchants);
 
 				((EnchantmentHandlerDuck)receiver).falsetm$SetPossibleEnchants(possibleEnchants);
 
 				if(!possibleEnchants.isEmpty()){
-					Registry<Enchantment> registryManager = world.getRegistryManager().getOrThrow(RegistryKeys.ENCHANTMENT);
-					IndexedIterable<RegistryEntry<Enchantment>> indexedIterable = registryManager.getIndexedEntries();
+					Registry<Enchantment> registryManager = world.registryAccess().lookupOrThrow(Registries.ENCHANTMENT);
+					IdMap<Holder<Enchantment>> indexedIterable = registryManager.asHolderIdMap();
 
-					Random random = ((EnchantmentScreenHandlerAccessor)receiver).getRandom();
-					random.setSeed(receiver.getSeed());
+					RandomSource random = ((EnchantmentScreenHandlerAccessor)receiver).getRandom();
+					random.setSeed(receiver.getEnchantmentSeed());
 
-					EnchantmentLevelEntry selected = possibleEnchants.get(random.nextInt(possibleEnchants.size()));
+					EnchantmentInstance selected = possibleEnchants.get(random.nextInt(possibleEnchants.size()));
 
 					//bump up now if we should show it
 					float roll = random.nextFloat();
 					int selectedEnchantsLevel = selected.level();
 					if(config.shouldShowBumpUp() && roll <= config.getBumpUpChance() && selectedEnchantsLevel < selected.enchantment().value().getMaxLevel()){
-						selected = new EnchantmentLevelEntry(selected.enchantment(), selected.level()+1);
+						selected = new EnchantmentInstance(selected.enchantment(), selected.level()+1);
 					}
 
 					//set the enchantment. Edit this to make it use text for display
-					receiver.enchantmentPower[0] = config.getCost0();
-					receiver.enchantmentId[0] = indexedIterable.getRawId(selected.enchantment());
-					receiver.enchantmentLevel[0] = selected.level();
+					receiver.costs[0] = config.getCost0();
+					receiver.enchantClue[0] = indexedIterable.getId(selected.enchantment());
+					receiver.levelClue[0] = selected.level();
 
 					int mixerRealID = -1;
-					Optional<RegistryEntry.Reference<Enchantment>> mixer = registryManager.getEntry(mixerID);
+					Optional<Holder.Reference<Enchantment>> mixer = registryManager.get(mixerID);
 					if(mixer.isPresent()){
-						mixerRealID = indexedIterable.getRawId(mixer.get());
+						mixerRealID = indexedIterable.getId(mixer.get());
 					}
 					int allRealID = -1;
-					Optional<RegistryEntry.Reference<Enchantment>> all = registryManager.getEntry(all_enchantsID);
+					Optional<Holder.Reference<Enchantment>> all = registryManager.get(all_enchantsID);
 					if(all.isPresent()){
-						allRealID = indexedIterable.getRawId(all.get());
+						allRealID = indexedIterable.getId(all.get());
 					}
-					receiver.enchantmentPower[1] = config.getCost1();
-					receiver.enchantmentId[1] = mixerRealID;
-					receiver.enchantmentLevel[1] = 1;
-					receiver.enchantmentPower[2] = config.getCost2();
-					receiver.enchantmentId[2] = allRealID;
-					receiver.enchantmentLevel[2] = 1;
+					receiver.costs[1] = config.getCost1();
+					receiver.enchantClue[1] = mixerRealID;
+					receiver.levelClue[1] = 1;
+					receiver.costs[2] = config.getCost2();
+					receiver.enchantClue[2] = allRealID;
+					receiver.levelClue[2] = 1;
 
-					receiver.sendContentUpdates();
+					receiver.broadcastChanges();
 				}
 				else{
 					//set to nothing if no possible enchantments
 					for (int i = 0; i < 3; i++) {
-						receiver.enchantmentPower[i] = 0;
-						receiver.enchantmentId[i] = -1;
-						receiver.enchantmentLevel[i] = -1;
+						receiver.costs[i] = 0;
+						receiver.enchantClue[i] = -1;
+						receiver.levelClue[i] = -1;
 					}
 				}
 
-				return ActionResult.FAIL;
+				return InteractionResult.FAIL;
 			}
-			return ActionResult.PASS;
+			return InteractionResult.PASS;
 		});
 
 		GenerateEnchantCallback.EVENT.register((receiver, registryManager, stack, slot, level) -> {
 			if(config.isEnabled()){
-				List<EnchantmentLevelEntry> possibleEnchants = ((EnchantmentHandlerDuck)receiver).falsetm$GetPossibleEnchants();
-				List<EnchantmentLevelEntry> returnEnchants = new ArrayList<>();
+				List<EnchantmentInstance> possibleEnchants = ((EnchantmentHandlerDuck)receiver).falsetm$GetPossibleEnchants();
+				List<EnchantmentInstance> returnEnchants = new ArrayList<>();
 
-				Random random = ((EnchantmentScreenHandlerAccessor)receiver).getRandom();
-				random.setSeed(receiver.getSeed() + slot);
+				RandomSource random = ((EnchantmentScreenHandlerAccessor)receiver).getRandom();
+				random.setSeed(receiver.getEnchantmentSeed() + slot);
 
 				if(possibleEnchants != null && !possibleEnchants.isEmpty()){
 					//top slot (SINGLE MAX LEVEL ENCHANT)
 					if(slot == 0){
-						Optional<Registry<Enchantment>> optional = registryManager.getOptional(RegistryKeys.ENCHANTMENT);
+						Optional<Registry<Enchantment>> optional = registryManager.lookup(Registries.ENCHANTMENT);
 						if(optional.isPresent()){
-							Optional<RegistryEntry.Reference<Enchantment>> enchantment = optional.get().getEntry(receiver.enchantmentId[0]);
+							Optional<Holder.Reference<Enchantment>> enchantment = optional.get().get(receiver.enchantClue[0]);
 							if(enchantment.isPresent()){
 
 								Enchantment selectedEnchantment = enchantment.get().value();
 								float roll = random.nextFloat();
-								int selectedEnchantsLevel = receiver.enchantmentLevel[0];
+								int selectedEnchantsLevel = receiver.levelClue[0];
 								if(!config.shouldShowBumpUp() && roll <= config.getBumpUpChance() && selectedEnchantsLevel < selectedEnchantment.getMaxLevel()){
 									selectedEnchantsLevel++;
 								}
-								EnchantmentLevelEntry outputEnchantmentEntry = new EnchantmentLevelEntry(enchantment.get(), selectedEnchantsLevel);
+								EnchantmentInstance outputEnchantmentEntry = new EnchantmentInstance(enchantment.get(), selectedEnchantsLevel);
 								returnEnchants.add(outputEnchantmentEntry);
 							}
 						}
@@ -204,10 +209,10 @@ public class EnchantmentExploration implements ModInitializer {
 						int originalSize = possibleEnchants.size();
 						for(int i = 0; i < originalSize; i++) {
 							int randomIndex = random.nextInt(possibleEnchants.size());
-							EnchantmentLevelEntry entry = possibleEnchants.get(randomIndex);
+							EnchantmentInstance entry = possibleEnchants.get(randomIndex);
 							possibleEnchants.remove(randomIndex);
 
-							boolean compatibleWithAll = net.minecraft.enchantment.EnchantmentHelper.isCompatible(returnEnchants.stream().map(EnchantmentLevelEntry::enchantment).collect(Collectors.toList()), entry.enchantment());
+							boolean compatibleWithAll = net.minecraft.world.item.enchantment.EnchantmentHelper.isEnchantmentCompatible(returnEnchants.stream().map(EnchantmentInstance::enchantment).collect(Collectors.toList()), entry.enchantment());
 
 							if(compatibleWithAll){
 								float roll = random.nextFloat();
@@ -220,7 +225,7 @@ public class EnchantmentExploration implements ModInitializer {
 											curLevel--;
 										}
 									}
-									returnEnchants.add(new EnchantmentLevelEntry(entry.enchantment(), curLevel));
+									returnEnchants.add(new EnchantmentInstance(entry.enchantment(), curLevel));
 								}
 							}
 						}
@@ -230,14 +235,14 @@ public class EnchantmentExploration implements ModInitializer {
 						int originalSize = possibleEnchants.size();
 						for(int i = 0; i < originalSize; i++){
 							int randomIndex = random.nextInt(possibleEnchants.size());
-							EnchantmentLevelEntry entry = possibleEnchants.get(randomIndex);
+							EnchantmentInstance entry = possibleEnchants.get(randomIndex);
 							possibleEnchants.remove(randomIndex);
 
-							boolean compatibleWithAll = net.minecraft.enchantment.EnchantmentHelper.isCompatible(returnEnchants.stream().map(EnchantmentLevelEntry::enchantment).collect(Collectors.toList()), entry.enchantment());
+							boolean compatibleWithAll = net.minecraft.world.item.enchantment.EnchantmentHelper.isEnchantmentCompatible(returnEnchants.stream().map(EnchantmentInstance::enchantment).collect(Collectors.toList()), entry.enchantment());
 							if(compatibleWithAll){
 								int curLevel = entry.level();
 								if(curLevel > 1){
-									returnEnchants.add(new EnchantmentLevelEntry(entry.enchantment(), curLevel-1));
+									returnEnchants.add(new EnchantmentInstance(entry.enchantment(), curLevel-1));
 								}
 								else{
 									returnEnchants.add(entry);
@@ -254,8 +259,8 @@ public class EnchantmentExploration implements ModInitializer {
 		EnchantmentScreenHandlerApplyCostCallback.EVENT.register((receiver, itemStack, inputLevels) -> {
 			if(config.isEnabled()){
 				int selected = inputLevels-1;
-				if(selected < receiver.enchantmentPower.length){
-					return receiver.enchantmentPower[selected];
+				if(selected < receiver.costs.length){
+					return receiver.costs[selected];
 				}
 			}
 			return inputLevels;
@@ -263,43 +268,43 @@ public class EnchantmentExploration implements ModInitializer {
 
 		AnvilScreenHandlerUpdateResultCallback.EVENT.register((receiver -> {
 			if(config.isEnabled()){
-				ItemStack input1 = receiver.getSlot(AnvilScreenHandler.INPUT_1_ID).getStack();
-				ItemStack input2 = receiver.getSlot(AnvilScreenHandler.INPUT_2_ID).getStack();
+				ItemStack input1 = receiver.getSlot(AnvilMenu.INPUT_SLOT).getItem();
+				ItemStack input2 = receiver.getSlot(AnvilMenu.ADDITIONAL_SLOT).getItem();
 				boolean cancelBook = false;
-				if(input2.isOf(Items.ENCHANTED_BOOK)){
+				if(input2.is(Items.ENCHANTED_BOOK)){
 					cancelBook = true;
-					if((input1.isOf(Items.ENCHANTED_BOOK) && config.shouldAnvilCombineBookUpgrade())){
+					if((input1.is(Items.ENCHANTED_BOOK) && config.shouldAnvilCombineBookUpgrade())){
 						cancelBook = false;
-						ItemEnchantmentsComponent enchants1 = net.minecraft.enchantment.EnchantmentHelper.getEnchantments(input1);
-						ItemEnchantmentsComponent enchants2 = net.minecraft.enchantment.EnchantmentHelper.getEnchantments(input2);
-						for(var enchantment : enchants1.getEnchantments()){
-							if(!enchants2.getEnchantments().contains(enchantment) || enchants1.getLevel(enchantment) != enchants2.getLevel(enchantment)){
+						ItemEnchantments enchants1 = net.minecraft.world.item.enchantment.EnchantmentHelper.getEnchantmentsForCrafting(input1);
+						ItemEnchantments enchants2 = net.minecraft.world.item.enchantment.EnchantmentHelper.getEnchantmentsForCrafting(input2);
+						for(var enchantment : enchants1.keySet()){
+							if(!enchants2.keySet().contains(enchantment) || enchants1.getLevel(enchantment) != enchants2.getLevel(enchantment)){
 								cancelBook = true;
 								break;
 							}
 						}
 					}
 				}
-				if((input2.isDamageable() && config.shouldRemoveToolAnvilCombination()) || (config.shouldRemoveBookAnvilCombination() && cancelBook)){
-					receiver.setStackInSlot(AnvilScreenHandler.OUTPUT_ID, receiver.nextRevision(), ItemStack.EMPTY);
+				if((input2.isDamageableItem() && config.shouldRemoveToolAnvilCombination()) || (config.shouldRemoveBookAnvilCombination() && cancelBook)){
+					receiver.setItem(AnvilMenu.RESULT_SLOT, receiver.incrementStateId(), ItemStack.EMPTY);
 					//receiver.levelCost.set(0);
-					return ActionResult.FAIL;
+					return InteractionResult.FAIL;
 				}
 			}
-			return ActionResult.PASS;
+			return InteractionResult.PASS;
 		}));
 
 		AnvilScreenUpdateResultGetSecondInputCallback.EVENT.register((receiver, inventory) -> {
 			if(config.isEnabled()){
-				ItemStack book = inventory.getStack(0);
-				if(book.isOf(Items.ENCHANTED_BOOK)){
-					ItemStack input2 = inventory.getStack(1);
-					String itemID = Registries.ITEM.getId(input2.getItem()).toString();
+				ItemStack book = inventory.getItem(0);
+				if(book.is(Items.ENCHANTED_BOOK)){
+					ItemStack input2 = inventory.getItem(1);
+					String itemID = BuiltInRegistries.ITEM.getKey(input2.getItem()).toString();
 					if(config.getAnvilBookUpgradeItems().contains(itemID)){
-						ItemEnchantmentsComponent enchantmentsComponent = net.minecraft.enchantment.EnchantmentHelper.getEnchantments(book);
-						if(!enchantmentsComponent.getEnchantments().isEmpty()){
-							ItemStack returnStack = Items.ENCHANTED_BOOK.getDefaultStack();
-							net.minecraft.enchantment.EnchantmentHelper.set(returnStack, enchantmentsComponent);
+						ItemEnchantments enchantmentsComponent = net.minecraft.world.item.enchantment.EnchantmentHelper.getEnchantmentsForCrafting(book);
+						if(!enchantmentsComponent.keySet().isEmpty()){
+							ItemStack returnStack = Items.ENCHANTED_BOOK.getDefaultInstance();
+							net.minecraft.world.item.enchantment.EnchantmentHelper.setEnchantments(returnStack, enchantmentsComponent);
 							return returnStack;
 						}
 					}
@@ -312,23 +317,23 @@ public class EnchantmentExploration implements ModInitializer {
 		//patching removing the second stack on repair
 		AnvilScreenTakeOutputNoRepairClearSecondCallback.EVENT.register((receiver, inventory) -> {
 			if(config.isEnabled()){
-				ItemStack input2 = inventory.getStack(1);
+				ItemStack input2 = inventory.getItem(1);
 				if(!input2.isEmpty() && input2.getCount() > 1){
-					input2.decrement(1);
-					inventory.setStack(1, input2);
+					input2.shrink(1);
+					inventory.setItem(1, input2);
 				}
 				else{
-					inventory.setStack(1, ItemStack.EMPTY);
+					inventory.setItem(1, ItemStack.EMPTY);
 				}
-				return ActionResult.FAIL;
+				return InteractionResult.FAIL;
 			}
-			return ActionResult.PASS;
+			return InteractionResult.PASS;
 		});
 
 		ItemStackCanRepairWithCallback.EVENT.register((receiver, repairStack) -> {
 			if(config.isEnabled()){
-				var repair = config.getRepairItem(Registries.ITEM.getId(repairStack.getItem()).toString());
-				if(repair != null && repair.containsItem(Registries.ITEM.getId(receiver.getItem()).toString())){
+				var repair = config.getRepairItem(BuiltInRegistries.ITEM.getKey(repairStack.getItem()).toString());
+				if(repair != null && repair.containsItem(BuiltInRegistries.ITEM.getKey(receiver.getItem()).toString())){
 					return true;
 				}
 				if(!config.doDefaultRepairMaterialsWork()){
@@ -350,23 +355,23 @@ public class EnchantmentExploration implements ModInitializer {
 			if(config.isEnabled()){
 				for (var entry : config.getLootTableBookPulls().entrySet()) {
 
-					ReloadableRegistries.Lookup lookup = context.getWorld().getServer().getReloadableRegistries();
+					ReloadableServerRegistries.Holder lookup = context.getLevel().getServer().reloadableRegistries();
 
-					Identifier table1ID = Identifier.of(entry.getKey());
-					var attempted = lookup.getLootTable(RegistryKey.of(RegistryKeys.LOOT_TABLE, table1ID));
+					Identifier table1ID = Identifier.parse(entry.getKey());
+					var attempted = lookup.getLootTable(ResourceKey.create(Registries.LOOT_TABLE, table1ID));
 
 					if (receiver.equals(attempted)) {
-						Identifier table2ID = Identifier.of(entry.getValue());
-						var secondaryTable = lookup.getLootTable(RegistryKey.of(RegistryKeys.LOOT_TABLE, table2ID));
+						Identifier table2ID = Identifier.parse(entry.getValue());
+						var secondaryTable = lookup.getLootTable(ResourceKey.create(Registries.LOOT_TABLE, table2ID));
 						if(secondaryTable != null){
 							((LootTableDuck) secondaryTable).falsetm$skipMixin();
-							secondaryTable.generateUnprocessedLoot(context, lootConsumer);
+							secondaryTable.getRandomItemsRaw(context, lootConsumer);
 						}
 						break;
 					}
 				}
 			}
-			return ActionResult.PASS;
+			return InteractionResult.PASS;
 		});
 
 		//Villager trades
@@ -375,31 +380,31 @@ public class EnchantmentExploration implements ModInitializer {
 				for(String stringEntry : config.getVillagerSkipEnchantments()){
 					Identifier id = Identifier.tryParse(stringEntry);
 					if(id != null){
-						RegistryEntry<Enchantment> entry = registry.getEntry(registry.get(id));
+						Holder<Enchantment> entry = registry.wrapAsHolder(registry.getValue(id));
 						if(entry != null){
 							registrySkipEntrySet.get().add(entry);
 						}
 					}
 				}
 			}
-			return ActionResult.PASS;
+			return InteractionResult.PASS;
 		});
 
 		EnchantBookFactoryAfterGenerateEnchantmentCallback.EVENT.register((receiver, registry, currentPossibleEnchants) -> {
 			registrySkipEntrySet.remove();
 
-			return ActionResult.PASS;
+			return InteractionResult.PASS;
 		});
 
 		SellEnchantedToolFactoryCreateCallback.EVENT.register(((receiver, original) -> {
 			if(config.isEnabled() && config.shouldDisableVillagerToolTrades()){
 				ItemStack itemEnchanted = original.copy();
-				ItemEnchantmentsComponent enchantmentComponent = net.minecraft.enchantment.EnchantmentHelper.getEnchantments(itemEnchanted);
+				ItemEnchantments enchantmentComponent = net.minecraft.world.item.enchantment.EnchantmentHelper.getEnchantmentsForCrafting(itemEnchanted);
 
-				net.minecraft.enchantment.EnchantmentHelper.apply(original, components -> components.remove(removeEnchant -> true));
-				for (RegistryEntry<Enchantment> enchantment : enchantmentComponent.getEnchantments()) {
-					if (!config.getVillagerSkipEnchantments().contains(enchantment.getIdAsString())) {
-						original.addEnchantment(enchantment, enchantmentComponent.getLevel(enchantment));
+				net.minecraft.world.item.enchantment.EnchantmentHelper.updateEnchantments(original, components -> components.removeIf(removeEnchant -> true));
+				for (Holder<Enchantment> enchantment : enchantmentComponent.keySet()) {
+					if (!config.getVillagerSkipEnchantments().contains(enchantment.getRegisteredName())) {
+						original.enchant(enchantment, enchantmentComponent.getLevel(enchantment));
 					}
 				}
 
@@ -412,12 +417,12 @@ public class EnchantmentExploration implements ModInitializer {
 
 	public static Consumer<ItemStack> generateLootAfterFunctions(LootTable receiver, Consumer<ItemStack> lootConsumer, LootContext context) {
 		return (itemStack) -> {
-			if(itemStack.isOf(Items.ENCHANTED_BOOK)) {
+			if(itemStack.is(Items.ENCHANTED_BOOK)) {
 				boolean ignore = false;
 				for (String entry : config.getIgnoreTables()) {
 
-					Identifier id = Identifier.of(entry);
-					var attempted = context.getWorld().getServer().getReloadableRegistries().getLootTable(RegistryKey.of(RegistryKeys.LOOT_TABLE, id));
+					Identifier id = Identifier.parse(entry);
+					var attempted = context.getLevel().getServer().reloadableRegistries().getLootTable(ResourceKey.create(Registries.LOOT_TABLE, id));
 
 					if (receiver.equals(attempted)) {
 						ignore = true;
@@ -426,15 +431,15 @@ public class EnchantmentExploration implements ModInitializer {
 				}
 				if (!ignore) {
 					ItemStack itemEnchanted = itemStack.copy();
-					ItemEnchantmentsComponent enchantmentComponent = net.minecraft.enchantment.EnchantmentHelper.getEnchantments(itemEnchanted);
+					ItemEnchantments enchantmentComponent = net.minecraft.world.item.enchantment.EnchantmentHelper.getEnchantmentsForCrafting(itemEnchanted);
 
-					net.minecraft.enchantment.EnchantmentHelper.apply(itemStack, components -> components.remove(removeEnchant -> true));
-					for (RegistryEntry<Enchantment> enchantment : enchantmentComponent.getEnchantments()) {
-						if (!config.getLootTableSkipEnchantments().contains(enchantment.getIdAsString())) {
-							itemStack.addEnchantment(enchantment, enchantmentComponent.getLevel(enchantment));
+					net.minecraft.world.item.enchantment.EnchantmentHelper.updateEnchantments(itemStack, components -> components.removeIf(removeEnchant -> true));
+					for (Holder<Enchantment> enchantment : enchantmentComponent.keySet()) {
+						if (!config.getLootTableSkipEnchantments().contains(enchantment.getRegisteredName())) {
+							itemStack.enchant(enchantment, enchantmentComponent.getLevel(enchantment));
 						}
 					}
-					if (net.minecraft.enchantment.EnchantmentHelper.getEnchantments(itemStack).getEnchantments().isEmpty()) {
+					if (net.minecraft.world.item.enchantment.EnchantmentHelper.getEnchantmentsForCrafting(itemStack).keySet().isEmpty()) {
 						itemStack = ItemStack.EMPTY;
 					}
 				}

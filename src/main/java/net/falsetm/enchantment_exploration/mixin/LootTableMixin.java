@@ -5,10 +5,10 @@ import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import net.falsetm.enchantment_exploration.events.LootTableApplyFunctionsCallback;
 import net.falsetm.enchantment_exploration.events.LootTableFinishGenerateUnprocessedCallback;
 import net.falsetm.enchantment_exploration.mixin_ducks.LootTableDuck;
-import net.minecraft.item.ItemStack;
-import net.minecraft.loot.LootTable;
-import net.minecraft.loot.context.LootContext;
-import net.minecraft.util.ActionResult;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.storage.loot.LootContext;
+import net.minecraft.world.level.storage.loot.LootTable;
 import org.jetbrains.annotations.Nullable;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
@@ -29,7 +29,7 @@ public class LootTableMixin implements LootTableDuck {
         skipFunctionMixin = true;
     }
 
-    @WrapOperation(method = "generateUnprocessedLoot(Lnet/minecraft/loot/context/LootContext;Ljava/util/function/Consumer;)V", at = @At(value = "INVOKE", target = "Lnet/minecraft/loot/function/LootFunction;apply(Ljava/util/function/BiFunction;Ljava/util/function/Consumer;Lnet/minecraft/loot/context/LootContext;)Ljava/util/function/Consumer;"))
+    @WrapOperation(method = "getRandomItemsRaw(Lnet/minecraft/world/level/storage/loot/LootContext;Ljava/util/function/Consumer;)V", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/level/storage/loot/functions/LootItemFunction;decorate(Ljava/util/function/BiFunction;Ljava/util/function/Consumer;Lnet/minecraft/world/level/storage/loot/LootContext;)Ljava/util/function/Consumer;"))
     public Consumer<ItemStack> falsetm$applyFunctions(BiFunction<ItemStack, LootContext, ItemStack> itemApplier, Consumer<ItemStack> lootConsumer, LootContext context, Operation<Consumer<ItemStack>> original){
         if(!skipFunctionMixin){
             @Nullable Consumer<ItemStack> result = LootTableApplyFunctionsCallback.EVENT.invoker().onApply((LootTable)((Object)this), itemApplier, lootConsumer, context, original);
@@ -42,10 +42,10 @@ public class LootTableMixin implements LootTableDuck {
         return lootConsumer;
     }
 
-    @Inject(method = "generateUnprocessedLoot(Lnet/minecraft/loot/context/LootContext;Ljava/util/function/Consumer;)V", at = @At(value = "INVOKE", target = "Lnet/minecraft/loot/context/LootContext;markInactive(Lnet/minecraft/loot/context/LootContext$Entry;)V"), cancellable = true)
+    @Inject(method = "getRandomItemsRaw(Lnet/minecraft/world/level/storage/loot/LootContext;Ljava/util/function/Consumer;)V", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/level/storage/loot/LootContext;popVisitedElement(Lnet/minecraft/world/level/storage/loot/LootContext$VisitedEntry;)V"), cancellable = true)
     public void falsetm$endUnprocessed(LootContext context, Consumer<ItemStack> lootConsumer, CallbackInfo ci){
-        ActionResult result = LootTableFinishGenerateUnprocessedCallback.EVENT.invoker().beforeInactive((LootTable)((Object)this), context, lootConsumer);
-        if(result == ActionResult.FAIL){
+        InteractionResult result = LootTableFinishGenerateUnprocessedCallback.EVENT.invoker().beforeInactive((LootTable)((Object)this), context, lootConsumer);
+        if(result == InteractionResult.FAIL){
             ci.cancel();
         }
     }

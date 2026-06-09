@@ -2,22 +2,22 @@ package net.falsetm.enchantment_exploration.events;
 
 import net.fabricmc.fabric.api.event.Event;
 import net.fabricmc.fabric.api.event.EventFactory;
-import net.minecraft.inventory.Inventory;
-import net.minecraft.screen.AnvilScreenHandler;
-import net.minecraft.util.ActionResult;
+import net.minecraft.world.Container;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.inventory.AnvilMenu;
 
 public interface AnvilScreenTakeOutputNoRepairClearSecondCallback {
     Event<AnvilScreenTakeOutputNoRepairClearSecondCallback> EVENT = EventFactory.createArrayBacked(AnvilScreenTakeOutputNoRepairClearSecondCallback.class,
             (listeners) -> (receiver, inventory) -> {
                 for (AnvilScreenTakeOutputNoRepairClearSecondCallback listener : listeners) {
-                    ActionResult result = listener.clearSlot(receiver, inventory);
+                    InteractionResult result = listener.clearSlot(receiver, inventory);
                     
-                    if (result != ActionResult.PASS) {
+                    if (result != InteractionResult.PASS) {
                         return result;
                     }
                 }
 
-                return ActionResult.PASS;
+                return InteractionResult.PASS;
             });
-    ActionResult clearSlot(AnvilScreenHandler receiver, Inventory inventory);
+    InteractionResult clearSlot(AnvilMenu receiver, Container inventory);
 }

@@ -1,14 +1,14 @@
 package net.falsetm.enchantment_exploration.mixin;
 
-import net.minecraft.registry.entry.RegistryEntryList;
-import net.minecraft.registry.entry.RegistryEntryOwner;
+import net.minecraft.core.HolderOwner;
+import net.minecraft.core.HolderSet;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.gen.Accessor;
 
-@Mixin(RegistryEntryList.Named.class)
+@Mixin(HolderSet.Named.class)
 public interface RegistryEntryListNamedAccessor {
     @Accessor
     @Final
-    RegistryEntryOwner<?> getOwner();
+    HolderOwner<?> getOwner();
 }
