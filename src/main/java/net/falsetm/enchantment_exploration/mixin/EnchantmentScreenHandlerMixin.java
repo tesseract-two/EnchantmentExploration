@@ -65,7 +65,7 @@ public class EnchantmentScreenHandlerMixin implements EnchantmentHandlerDuck {
 //        }
 //    }
 
-    @ModifyArgs(method = "clickMenuButton", at= @At(value = "INVOKE", target = "Lnet/minecraft/world/inventory/ContainerLevelAccess;execute(Ljava/util/function/BiConsumer;)V"))
+    @ModifyArgs(method = "method_17410", at= @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/player/Player;onEnchantmentPerformed(Lnet/minecraft/world/item/ItemStack;I)V"))
     public void falsetm$modifyApplyEnchantment(Args args) {
         @Nullable Integer output = EnchantmentScreenHandlerApplyCostCallback.EVENT.invoker().applyCost((EnchantmentMenu) ((Object)this), args.get(0), args.get(1));
         if(output != null){
