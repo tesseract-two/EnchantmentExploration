@@ -375,44 +375,44 @@ public class EnchantmentExploration implements ModInitializer {
 		});
 
 		//Villager trades
-		EnchantBookFactoryBeforeGenerateEnchantmentCallback.EVENT.register((receiver, registry, currentPossibleEnchants) -> {
-			if(config.isEnabled() && config.shouldDisableVillagerBookTrades()){
-				for(String stringEntry : config.getVillagerSkipEnchantments()){
-					Identifier id = Identifier.tryParse(stringEntry);
-					if(id != null){
-						Holder<Enchantment> entry = registry.wrapAsHolder(registry.getValue(id));
-						if(entry != null){
-							registrySkipEntrySet.get().add(entry);
-						}
-					}
-				}
-			}
-			return InteractionResult.PASS;
-		});
-
-		EnchantBookFactoryAfterGenerateEnchantmentCallback.EVENT.register((receiver, registry, currentPossibleEnchants) -> {
-			registrySkipEntrySet.remove();
-
-			return InteractionResult.PASS;
-		});
-
-		SellEnchantedToolFactoryCreateCallback.EVENT.register(((receiver, original) -> {
-			if(config.isEnabled() && config.shouldDisableVillagerToolTrades()){
-				ItemStack itemEnchanted = original.copy();
-				ItemEnchantments enchantmentComponent = net.minecraft.world.item.enchantment.EnchantmentHelper.getEnchantmentsForCrafting(itemEnchanted);
-
-				net.minecraft.world.item.enchantment.EnchantmentHelper.updateEnchantments(original, components -> components.removeIf(removeEnchant -> true));
-				for (Holder<Enchantment> enchantment : enchantmentComponent.keySet()) {
-					if (!config.getVillagerSkipEnchantments().contains(enchantment.getRegisteredName())) {
-						original.enchant(enchantment, enchantmentComponent.getLevel(enchantment));
-					}
-				}
-
-				return original;
-			}
-
-			return null;
-		}));
+//		EnchantBookFactoryBeforeGenerateEnchantmentCallback.EVENT.register((receiver, registry, currentPossibleEnchants) -> {
+//			if(config.isEnabled() && config.shouldDisableVillagerBookTrades()){
+//				for(String stringEntry : config.getVillagerSkipEnchantments()){
+//					Identifier id = Identifier.tryParse(stringEntry);
+//					if(id != null){
+//						Holder<Enchantment> entry = registry.wrapAsHolder(registry.getValue(id));
+//						if(entry != null){
+//							registrySkipEntrySet.get().add(entry);
+//						}
+//					}
+//				}
+//			}
+//			return InteractionResult.PASS;
+//		});
+//
+//		EnchantBookFactoryAfterGenerateEnchantmentCallback.EVENT.register((receiver, registry, currentPossibleEnchants) -> {
+//			registrySkipEntrySet.remove();
+//
+//			return InteractionResult.PASS;
+//		});
+//
+//		SellEnchantedToolFactoryCreateCallback.EVENT.register(((receiver, original) -> {
+//			if(config.isEnabled() && config.shouldDisableVillagerToolTrades()){
+//				ItemStack itemEnchanted = original.copy();
+//				ItemEnchantments enchantmentComponent = net.minecraft.world.item.enchantment.EnchantmentHelper.getEnchantmentsForCrafting(itemEnchanted);
+//
+//				net.minecraft.world.item.enchantment.EnchantmentHelper.updateEnchantments(original, components -> components.removeIf(removeEnchant -> true));
+//				for (Holder<Enchantment> enchantment : enchantmentComponent.keySet()) {
+//					if (!config.getVillagerSkipEnchantments().contains(enchantment.getRegisteredName())) {
+//						original.enchant(enchantment, enchantmentComponent.getLevel(enchantment));
+//					}
+//				}
+//
+//				return original;
+//			}
+//
+//			return null;
+//		}));
 	}
 
 	public static Consumer<ItemStack> generateLootAfterFunctions(LootTable receiver, Consumer<ItemStack> lootConsumer, LootContext context) {

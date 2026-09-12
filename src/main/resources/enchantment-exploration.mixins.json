@@ -9,11 +9,9 @@
       	"AnvilScreenHandlerMixin",
       	"ItemStackMixin",
       	"LootTableMixin",
-		"TradeOffersEnchantBookFactoryMixin",
 		"RegistryMixin",
 		"RegistryEntryListNamed",
-		"RegistryEntryListNamedAccessor",
-		"TradeOffersSellEnchantedToolFactoryMixin"
+		"RegistryEntryListNamedAccessor"
 	],
 	"injectors": {
 		"defaultRequire": 1

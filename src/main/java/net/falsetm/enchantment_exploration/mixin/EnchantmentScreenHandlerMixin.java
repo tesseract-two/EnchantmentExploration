@@ -40,7 +40,7 @@ public class EnchantmentScreenHandlerMixin implements EnchantmentHandlerDuck {
         this.possibleEnchants = possibleEnchants;
     }
 
-    @Inject(method = "method_17411", at= @At("HEAD"), cancellable = true)
+    @Inject(method = "lambda$slotsChanged$0", at = @At("HEAD"), cancellable = true)
     public void falsetm$EnchantmentContentChanged(ItemStack itemStack, Level world, BlockPos pos, CallbackInfo ci){
         InteractionResult result = EnchantmentContentChangedCallback.EVENT.invoker().contentChanged((EnchantmentMenu) ((Object)this), itemStack, world, pos);
         if(result == InteractionResult.FAIL){
@@ -48,7 +48,7 @@ public class EnchantmentScreenHandlerMixin implements EnchantmentHandlerDuck {
         }
     }
 
-    @WrapOperation(method = "method_17410", at= @At(value = "INVOKE", target = "Lnet/minecraft/world/inventory/EnchantmentMenu;getEnchantmentList(Lnet/minecraft/core/RegistryAccess;Lnet/minecraft/world/item/ItemStack;II)Ljava/util/List;"))
+    @WrapOperation(method = "lambda$clickMenuButton$0", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/inventory/EnchantmentMenu;getEnchantmentList(Lnet/minecraft/core/RegistryAccess;Lnet/minecraft/world/item/ItemStack;II)Ljava/util/List;"))
     public List<EnchantmentInstance> falsetm$ButtonClickedGenerateEnchantment(EnchantmentMenu instance, RegistryAccess registryManager, ItemStack stack, int slot, int level, Operation<List<EnchantmentInstance>> original){
         List <EnchantmentInstance> result = GenerateEnchantCallback.EVENT.invoker().generateEnchantment(instance, registryManager, stack, slot, level);
         if(result != null){
@@ -65,7 +65,7 @@ public class EnchantmentScreenHandlerMixin implements EnchantmentHandlerDuck {
 //        }
 //    }
 
-    @ModifyArgs(method = "method_17410", at= @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/player/Player;onEnchantmentPerformed(Lnet/minecraft/world/item/ItemStack;I)V"))
+    @ModifyArgs(method = "lambda$clickMenuButton$0", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/player/Player;onEnchantmentPerformed(Lnet/minecraft/world/item/ItemStack;I)V"))
     public void falsetm$modifyApplyEnchantment(Args args) {
         @Nullable Integer output = EnchantmentScreenHandlerApplyCostCallback.EVENT.invoker().applyCost((EnchantmentMenu) ((Object)this), args.get(0), args.get(1));
         if(output != null){
